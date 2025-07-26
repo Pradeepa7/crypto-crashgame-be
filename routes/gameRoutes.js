@@ -3,9 +3,10 @@ const router = express.Router();
 const gameController = require('../controllers/gameController');
 
 /* GET game routes page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'welcome game routes page..' });
+router.get('/', function(req, res) {
+  res.status(200).send('Game API is working');
 });
+
 
 // POST /api/bet - Place bet
 router.post('/bet', gameController.betHandler);
