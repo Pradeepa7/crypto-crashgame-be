@@ -21,7 +21,7 @@
     3.  Configure Environment Variables
     Create a .env file:
     
-    MONGO_URI=mongodb+srv://truelinetamizha9025:xxhk0C5yppWROdai@cluster0.hlijsuw.mongodb.net/crash-game?retryWrites=true&w=majority&appName=Cluster0
+    MONGO_URI=mymongodb_api
     CRYPTO_API_URL=https://api.coingecko.com/api/v3/simple/price
 
     (We use the CoinGecko API for real-time crypto prices, which doesn't require an API key. If you use another service, configure API_KEY here too.)
