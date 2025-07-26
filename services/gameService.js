@@ -237,9 +237,10 @@ async function placeBet(playerId, usdAmount, cryptoType) {
     timestamp: new Date(),
   });
 
-  // Push bet into DB round
-  currentRound.bets.push({ playerId, usdAmount, cryptoAmount, cryptoType });
-  await currentRound.save();
+ await GameRound.updateOne(
+  { _id: currentRound._id },
+  { $push: { bets: { playerId, usdAmount, cryptoAmount, cryptoType } } }
+);
 
   if (!betReceived && betResolver) {
     betReceived = true;
@@ -285,14 +286,20 @@ async function cashout(playerId) {
     timestamp: new Date(),
   });
 
-  // Save cashout to current round
-  currentRound.cashouts.push({
-    playerId,
-    cryptoAmount: payout,
-    multiplier,
-    usdValue: payout * priceAtBetTime,
-  });
-  await currentRound.save();
+  await GameRound.updateOne(
+  { _id: currentRound._id },
+  {
+    $push: {
+      cashouts: {
+        playerId,
+        cryptoAmount: payout,
+        multiplier,
+        usdValue: payout * priceAtBetTime,
+      },
+    },
+  }
+);
+
 
   // Notify clients of cashout
   ioInstance.emit("playerCashout", {
