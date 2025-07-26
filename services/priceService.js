@@ -3,7 +3,7 @@ const axios = require("axios");
 let cache = {}; // Cache to store coin prices temporarily
 
 // Retry with exponential backoff
-async function fetchWithRetry(url, coinId, retries = 3, delay = 2000) {
+async function fetchWithRetry(url, coinId, retries = 3, delay = 500) {
   try {
     const response = await axios.get(url);
     const price = response.data[coinId]?.usd;
@@ -15,7 +15,7 @@ async function fetchWithRetry(url, coinId, retries = 3, delay = 2000) {
     if (err.response?.status === 429 && retries > 0) {
       console.warn(`Rate limit hit. Retrying ${coinId} in ${delay / 1000}s...`);
       await new Promise(res => setTimeout(res, delay));
-      return fetchWithRetry(url, coinId, retries - 1, delay * 2); // Exponential
+      return fetchWithRetry(url, coinId, retries - 1, delay); 
     } else {
       console.error(`API fetch failed for ${coinId}:`, err.message);
       throw err;
