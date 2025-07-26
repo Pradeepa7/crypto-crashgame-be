@@ -9,27 +9,29 @@ async function getPrice(coin) {
     ETH: "ethereum",
   };
 
-  // Map the coin symbol to CoinGecko ID
   const coinId = coinMap[coin.toUpperCase()];
   if (!coinId) throw new Error("Unsupported cryptocurrency");
 
-  // Return cached price if it was fetched within the last 10 seconds
+  // Return cached price if fetched within the last 10 seconds
   if (cache[coin] && Date.now() - cache[coin].timestamp < 10000) {
     return cache[coin].price;
   }
 
-  // Build the API URL to fetch live price from CoinGecko
-  const url = `${process.env.COINGECKO_API}?ids=${coinId}&vs_currencies=usd`;
+  const baseUrl = process.env.COINGECKO_API;
+  const url = `${baseUrl}?ids=${coinId}&vs_currencies=usd`;
 
-  // Send GET request to the API
-  const response = await axios.get(url);
+  try {
+    const response = await axios.get(url);
+    const price = response.data[coinId]?.usd;
 
-  // Extract price from response and update cache
-  const price = response.data[coinId].usd;
-  cache[coin] = { price, timestamp: Date.now() };
+    if (price === undefined) throw new Error("Price not found");
 
-  return price; // Return the current USD price
+    cache[coin] = { price, timestamp: Date.now() };
+    return price;
+  } catch (err) {
+    console.error(`Error fetching ${coin} price:`, err.message);
+    throw new Error("Failed to fetch price from CoinGecko");
+  }
 }
 
-// Export the getPrice function for use in other files
 module.exports = { getPrice };
