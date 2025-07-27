@@ -1,3 +1,6 @@
+// Load environment variables from .env file
+require('dotenv').config();
+
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -10,8 +13,6 @@ var dotenv = require('dotenv');
 var indexRouter = require('./routes/index');
 var gameRouter = require('./routes/gameRoutes');
 
-// Load environment variables from .env file
-dotenv.config();
 
 // Create Express app instance
 var app = express();
