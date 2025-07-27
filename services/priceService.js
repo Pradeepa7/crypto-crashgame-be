@@ -1,58 +1,49 @@
 const axios = require("axios");
 
-let cache = {}; // Cache to store coin prices temporarily
+const globalPriceCache = {
+  BTC: { price: 0, timestamp: 0 },
+  ETH: { price: 0, timestamp: 0 },
+};
 
-// Retry with exponential backoff
-async function fetchWithRetry(url, coinId, retries = 3, delay = 2000) {
-  try {
-    const response = await axios.get(url);
-    const price = response.data[coinId]?.usd;
+const coinMap = {
+  BTC: "bitcoin",
+  ETH: "ethereum",
+};
 
-    if (price === undefined) throw new Error("Price not found");
+const baseUrl = process.env.COINGECKO_API || "https://api.coingecko.com/api/v3/simple/price";
 
-    return price;
-  } catch (err) {
-    if (err.response?.status === 429 && retries > 0) {
-      console.warn(`⚠️ Rate limit hit. Retrying ${coinId} in ${delay / 1000}s...`);
-      await new Promise(res => setTimeout(res, delay));
+// Function to start polling prices every 10 seconds
+function startPricePolling() {
+  setInterval(async () => {
+    for (const [symbol, coinId] of Object.entries(coinMap)) {
+      try {
+        const url = `${baseUrl}?ids=${coinId}&vs_currencies=usd`;
+        const response = await axios.get(url);
+        const price = response.data[coinId]?.usd;
 
-      // Increase delay for exponential backoff
-      return fetchWithRetry(url, coinId, retries - 1, delay * 2);
-    } else {
-      console.error(`❌ API fetch failed for ${coinId}:`, err.message);
-      throw err;
+        if (price) {
+          globalPriceCache[symbol] = { price, timestamp: Date.now() };
+          console.log(`Updated ${symbol} price: $${price}`);
+        }
+      } catch (err) {
+        console.error(`Error fetching ${symbol}:`, err.message);
+      }
     }
-  }
+  }, 10000); // every 10 seconds
 }
 
+// Start polling immediately
+startPricePolling();
 
-async function getPrice(coin) {
-  const coinMap = {
-    BTC: "bitcoin",
-    ETH: "ethereum",
-  };
+// Function used inside route handlers
+function getPrice(coin) {
+  const upper = coin.toUpperCase();
+  if (!coinMap[upper]) throw new Error("Unsupported cryptocurrency");
 
-  const coinId = coinMap[coin.toUpperCase()];
-  if (!coinId) throw new Error("Unsupported cryptocurrency");
+  const cached = globalPriceCache[upper];
+  if (!cached || cached.price === 0) throw new Error("Price not yet available");
 
-  // Check cache (valid for 10 seconds)
-  const now = Date.now();
-  if (cache[coin] && now - cache[coin].timestamp < 10000) {
-    return cache[coin].price;
-  }
-
-  const baseUrl = process.env.COINGECKO_API || "https://api.coingecko.com/api/v3/simple/price";
-  const url = `${baseUrl}?ids=${coinId}&vs_currencies=usd`;
-
-  try {
-    const price = await fetchWithRetry(url, coinId);
-    cache[coin] = { price, timestamp: now }; // Only cache on success
-    return price;
-  } catch (err) {
-    //  Don't update cache if fetch failed
-    console.error(`Final error fetching ${coin} price:`, err.message);
-    throw new Error("Failed to fetch price from CoinGecko");
-  }
+  return cached.price;
 }
 
 module.exports = { getPrice };

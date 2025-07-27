@@ -188,7 +188,7 @@ async function startGameLoop(io) {
 async function placeBet(playerId, usdAmount, cryptoType) {
   if (!currentRound) throw new Error("Game round has not started yet");
 
-  const price = await priceService.getPrice(cryptoType);
+  const price = priceService.getPrice(cryptoType);
   const cryptoAmount = usdAmount / price;
 
   let user = await User.findById(playerId);
