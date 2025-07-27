@@ -7,7 +7,6 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors'); // Middleware to enable Cross-Origin Resource Sharing
-var dotenv = require('dotenv');
 
 // Import route handlers
 var indexRouter = require('./routes/index');
